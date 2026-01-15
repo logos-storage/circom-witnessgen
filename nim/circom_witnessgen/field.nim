@@ -1,8 +1,14 @@
 
+import std/bitops
+
 import pkg/constantine/math/arithmetic
 import pkg/constantine/math/io/io_bigints
 import pkg/constantine/math/io/io_fields
 import pkg/constantine/named/properties_fields
+
+import pkg/constantine/platforms/abstractions
+#import pkg/constantine/math_arbitrary_precision/arithmetic/limbs_divmod
+#import pkg/constantine/math_arbitrary_precision/arithmetic/limbs_divmod_vartime
 
 #-------------------------------------------------------------------------------
 
@@ -13,14 +19,17 @@ type
 const zeroB* : B = fromHex( BigInt[254], "0x00" )
 const oneB*  : B = fromHex( BigInt[254], "0x01" )
 
+func isZeroB*   (x: B )    : bool = bool(isZero(x))
+func isEqualB*  (x, y: B ) : bool = bool(x == y)
+
 const zeroF* : F = fromHex( Fr[BN254Snarks], "0x00" )
 const oneF*  : F = fromHex( Fr[BN254Snarks], "0x01" )
 
-func isZeroB*   (x: B )    : bool = bool(isZero(x))
 func isZeroF*   (x: F )    : bool = bool(isZero(x))
 func isNonZeroF*(x: F )    : bool = not isZeroF(x)
 func isEqualF*  (x, y: F ) : bool = bool(x == y)
 func `===`*     (x, y: F ) : bool = isEqualF(x,y)
+func `!==`*     (x, y: F ) : bool = not isEqualF(x,y)
 
 const fieldMask*            : B = fromHex( BigInt[254] , "0x3fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", bigEndian )
 const fieldPrime*           : B = fromHex( BigInt[254] , "0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001", bigEndian )
@@ -77,12 +86,57 @@ func fToDecimal*(x: F): string =
 
 #-------------------------------------------------------------------------------
 
+func mulTruncB(x: B, y: B): B =
+  var z: BigInt[512] 
+  prod[512,254,254](z,x,y)
+  let us: array[8, SecretWord] = z.limbs
+  var vs: array[4, SecretWord]
+  vs[0] = us[0]
+  vs[1] = us[1]
+  vs[2] = us[2]
+  vs[3] = SecretWord( bitand( uint64(us[3]) , 0x3fffffffffffffff'u64 ) )
+  return BigInt[254](limbs: vs)
+
+#[ 
+
+# note: constantine's `divRem_vartime` doesn't seem to function correctly...
+
+func divB*(x: B, y: B): B = 
+  if isZeroB(y):
+    return zeroB
+  else:
+    let a: array[4, SecretWord] = x.limbs
+    let b: array[4, SecretWord] = y.limbs
+    var q: array[4, SecretWord]
+    var r: array[4, SecretWord]
+    let _ = divRem_vartime(q,r,a,b)
+    return BigInt[254](limbs: q)
+
+func modB*(x: B, y: B): B = 
+  if isZeroB(y):
+    return zeroB
+  else:
+    let a: array[4, SecretWord] = x.limbs
+    let b: array[4, SecretWord] = y.limbs
+    var q: array[4, SecretWord]
+    var r: array[4, SecretWord]
+    let _ = divRem_vartime(q,r,a,b)
+    return BigInt[254](limbs: r)
+
+]#
+
+#-------------------------------------------------------------------------------
+
 func negB* (y: B  ): B  =  ( var z : B = zeroB ; z -= y ; return z )
-func negF* (y: F  ): F  =  ( var z : F = zeroF ; z -= y ; return z )
-func invF* (y: F  ): F  =  ( var z : F = y ; if isNonZeroF(y): z.inv() ; return z )
 
 func `+`*[n](x, y: BigInt[n] ): BigInt[n] = ( var z : BigInt[n] = x ; z += y ; return z )
 func `-`*[n](x, y: BigInt[n] ): BigInt[n] = ( var z : BigInt[n] = x ; z -= y ; return z )
+func `*`*[n](x, y: BigInt[n] ): BigInt[n] = mulTruncB(x,y)
+
+#---------------------------------------
+
+func negF* (y: F  ): F  =  ( var z : F = zeroF ; z -= y ; return z )
+func invF* (y: F  ): F  =  ( var z : F = y ; if isNonZeroF(y): z.inv() ; return z )
 
 func `+`*(x, y: F ): F  =  ( var z : F = x ; z += y ; return z )
 func `-`*(x, y: F ): F  =  ( var z : F = x ; z -= y ; return z )
@@ -95,3 +149,23 @@ func powF*(x: F, y: B): F =
   return z
 
 #-------------------------------------------------------------------------------
+
+#[
+
+proc divModSanityCheck*() = 
+  # let x: B = decimalToB("12345678901234567890666");
+  # let y: B = decimalToB("7654321");
+  let x: B = decimalToB("18446744073709551618");
+  let y: B = decimalToB("7654321");
+  let q = divB(x,y)
+  let r = modB(x,y)
+  echo "x = " & bigToDecimal(x)
+  echo "y = " & bigToDecimal(y)
+  echo "q = " & bigToDecimal(q)
+  echo "r = " & bigToDecimal(r)
+  let check = q * y + r
+  echo "reconstr = " & bigToDecimal(check)
+  echo "ok = " & $(isEqualB(check,x))
+
+]#
+

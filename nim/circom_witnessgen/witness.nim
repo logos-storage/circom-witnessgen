@@ -1,13 +1,15 @@
 
 import std/tables
-import std/strformat
+#import std/strformat
 
 import ./field
+import ./types
 import ./graph
 import ./semantics
 
 #-------------------------------------------------------------------------------
 
+# the indices here are the witness indices, not the graph node indices!
 proc expandInputs*(circuitInputs: seq[(string, SignalDescription)] , inputs: Inputs): Table[int, F] =
   var table: Table[int, F]
   table[0] = oneF
@@ -23,7 +25,7 @@ proc expandInputs*(circuitInputs: seq[(string, SignalDescription)] , inputs: Inp
   return table
 
 # note: this contains temporary values which are not present in the actual witness
-proc generateFullComputation*(graph: Graph, inputs: Inputs): seq[F] =
+proc runFullComputation*(graph: Graph, inputs: Inputs): seq[F] =
 
   let sequence      : seq[Node[uint32]]                = graph.nodes
   let graphMeta     : GraphMetaData                    = graph.meta
@@ -39,32 +41,13 @@ proc generateFullComputation*(graph: Graph, inputs: Inputs): seq[F] =
 
   return output
 
-#[
-    let node_orig = sequence[i]
-    let o = 32*i
-    let hexo = fmt"{o=:x}"
-    if (i == 11838):    # o == 0x4fcc:
-      echo " i = " & ($i) & " | ofs = " & hexo & " | node = " & ($node_orig)
-      case node_orig.kind:
-        of Duo:
-          echo node_orig.duo.arg1
-          echo node_orig.duo.arg2
-          echo fToDecimal(output[int(node_orig.duo.arg1)])
-          echo fToDecimal(output[int(node_orig.duo.arg2)])
-        else:
-          discard
-      echo "result = " & fToDecimal(output[i])
-      echo " "
-]#
-
-proc generateWitness*(graph: Graph, inputs: Inputs): seq[F] =
+proc generateWitness*(graph: Graph, inputs: Inputs): Witness =
   let mapping: seq[uint32] = graph.meta.witnessMapping.mapping
-  let pre_witness = generateFullComputation(graph, inputs)
+  let pre_witness = runFullComputation(graph, inputs)
   var output: seq[F] = newSeq[F](mapping.len)
   for (j, idx) in mapping.pairs():
     output[j] = pre_witness[int(idx)]
     # echo " - " & ($j) & " -> " & fToDecimal(output[j]) & " | from " & ($idx)
   return output
-
 
 #-------------------------------------------------------------------------------

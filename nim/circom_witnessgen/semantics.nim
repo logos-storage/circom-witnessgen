@@ -136,22 +136,24 @@ proc shiftSanityCheck*() =
 
 #-------------------------------------------------------------------------------
 
-func evalUnoOpNode(op: UnoOp, x: F): F =  
+func evalUnoOpNode*(op: UnoOp, x: F): F =  
   case op:
     of Neg:  return negF(x)
     of Id:   return x
     of LNot: return boolToF( not (fToBool x) )
     of Bnot: return fieldComplement(x)
 
-func evalDuoOpNode(op: DuoOp, x: F, y: F): F =  
+func evalDuoOpNode*(op: DuoOp, x: F, y: F): F =  
   case op:
     of Mul:  return x * y
     of Div:  return if isZeroF(y): zeroF else: x / y
     of Add:  return x + y
     of Sub:  return x - y
-    of Pow:  return powF(x, fToBig(y))                      # assert( false, "Pow: not yet implemented"  )
-    of Idiv: assert( false, "Idiv: not yet implemented" )   # return bigToF( fToBig(x) div fToBig(y) )
-    of Mod:  assert( false, "Mod: not yet implemented"  )   # return bigToF( fToBig(x) mod fToBig(y) )
+    of Pow:  return powF(x, fToBig(y)) 
+    # of Idiv: return bigToF( divB( fToBig(x) , fToBig(y) ) ) 
+    # of Mod:  return bigToF( modB( fToBig(x) , fToBig(y) ) ) 
+    of Idiv: assert( false, "Idiv: not yet implemented" )
+    of Mod:  assert( false, "Mod: not yet implemented"  )
     of Eq:   return boolToF( x === y )
     of Neq:  return boolToF( not (x === y) )
     of Lt:   return boolToF( bool( fToBig(x) <  fToBig(y) ) )
@@ -166,7 +168,7 @@ func evalDuoOpNode(op: DuoOp, x: F, y: F): F =
     of Band: return bigToF( bigIntBitwiseAnd( fToBig(x) , fToBig(y) ) )
     of Bxor: return bigToF( bigIntBitwiseXor( fToBig(x) , fToBig(y) ) )
 
-func evalTresOpNode(op: TresOp, x: F, y: F, z: F): F =  
+func evalTresOpNode*(op: TresOp, x: F, y: F, z: F): F =  
   case op:
     of TernCond:
       return (if fToBool(x): y else: z)

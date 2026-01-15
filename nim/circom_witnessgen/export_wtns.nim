@@ -3,6 +3,7 @@ import std/streams
 
 import pkg/constantine/math/io/io_bigints
 
+import ./types
 import ./field
 
 #-------------------------------------------------------------------------------
@@ -44,7 +45,7 @@ proc exportFeltSequence*(filepath: string, values: seq[F]) =
   for i in 0..<values.len:
     stream.writeFelt( values[i] )
 
-proc exportWitness*(filepath: string, witness: seq[F]) = 
+proc exportWitness*(filepath: string, witness: Witness) = 
   var stream = newFileStream(filepath, fmWrite)
   stream.writeHeader(witness.len) 
   for i in 0..<witness.len:

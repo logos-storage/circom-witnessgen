@@ -10,8 +10,6 @@ import ./field
 
 type
 
-  Inputs* = Table[string, seq[F]]
-
   UnoOp* = enum
     Neg,
     Id,

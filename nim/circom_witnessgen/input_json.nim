@@ -4,7 +4,7 @@ import std/json
 import std/tables
 
 import ./field
-import ./graph
+import ./types
 
 #-------------------------------------------------------------------------------
 
