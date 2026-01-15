@@ -14,10 +14,10 @@ import circom_witnessgen/export_wtns
 
 #-------------------------------------------------------------------------------
 
-const graph_file:   string = "./tmp/rln_main.graph"
-const input_file:   string = "./tmp/input.json"
-const partial_file: string = "./tmp/partial.json"
-const wtns_file:    string = "./tmp/output.wtns"
+const graph_file:   string = "./nim/tmp/rln_main.graph"
+const input_file:   string = "./nim/tmp/input.json"
+const partial_file: string = "./nim/tmp/partial.json"
+const wtns_file:    string = "./nim/tmp/output.wtns"
 
 const unchanging_inputs: seq[string] = @["secret_key","msg_limit","merkle_root","leaf_idx","merkle_path"]
 

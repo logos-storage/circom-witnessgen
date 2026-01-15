@@ -4,3 +4,5 @@
 tmp/
 build/
 .ghc.environment.*
+main
+testMain
