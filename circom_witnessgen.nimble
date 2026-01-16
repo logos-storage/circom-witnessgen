@@ -4,6 +4,9 @@ description = "Witness generation for circom circuits"
 license     = "MIT OR Apache-2.0"
 srcDir      = "nim"
 
-bin = @["testMain"]
+installExt  = @["nim"]
+skipDirs    = @["tmp"]
+
+bin         = @["testMain"]
 
 requires "constantine >= 0.2.0"
